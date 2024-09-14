@@ -5,24 +5,14 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"unicode"
 	"unicode/utf8"
 )
 
 func main() {
 	args := os.Args[1:]
 
-	var flag, filename string
-	if len(args) == 1 {
-		filename = args[0]
-	} else if len(args) == 2 {
-		flag = args[0]
-		filename = args[1]
-	} else {
-		fmt.Println("Usage: ccwc [-c|-l|-w|-m] <filename>")
-		os.Exit(1)
-	}
-
-	counts := Count(filename)
+	counts, filename, flag := GetCounts(args)
 	switch flag {
 	case "-c":
 		fmt.Println(counts[0], filename)
@@ -31,13 +21,45 @@ func main() {
 	case "-w":
 		fmt.Println(counts[2], filename)
 	case "-m":
-		fmt.Println(counts, filename)
+		fmt.Println(counts[3], filename)
 	default:
 		fmt.Println(counts[1], counts[2], counts[0], filename)
 	}
 }
 
-func Count(filename string) [4]int {
+func GetCounts(args []string) ([4]int, string, string) {
+	var flag string
+	var counts [4]int
+	var filename string
+
+	stat, _ := os.Stdin.Stat()
+
+	if (stat.Mode() & os.ModeCharDevice) == 0 {
+		if len(args) == 1 {
+			flag = args[0]
+		} else if len(args) > 1 {
+			fmt.Println("Usage: cat <filename> | ccwc [-c|-l|-w|-m]")
+			os.Exit(1)
+		}
+		counts = CountFromStdIn()
+		filename = ""
+	} else {
+		if len(args) == 1 {
+			filename = args[0]
+		} else if len(args) == 2 {
+			flag = args[0]
+			filename = args[1]
+		} else {
+			fmt.Println("Usage: ccwc [-c|-l|-w|-m] <filename>")
+			os.Exit(1)
+		}
+		counts = CountFromFile(filename)
+	}
+
+	return counts, filename, flag
+}
+
+func CountFromFile(filename string) [4]int {
 
 	file, err := os.Open(filename)
 	if err != nil {
@@ -87,6 +109,43 @@ func Count(filename string) [4]int {
 				characterCount++
 			}
 		}
+	}
+
+	return [4]int{byteCount, lineCount, wordCount, characterCount}
+}
+
+func CountFromStdIn() [4]int {
+	byteCount := 0
+	lineCount := 0
+	wordCount := 0
+	characterCount := 0
+
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Split(bufio.ScanRunes)
+
+	inWord := false
+	for scanner.Scan() {
+		r := scanner.Text()
+		byteCount += len(r)
+		if r == "\n" {
+			lineCount++
+		}
+		if unicode.IsSpace([]rune(r)[0]) {
+			if inWord {
+				wordCount++
+				inWord = false
+			}
+		} else {
+			inWord = true
+		}
+		characterCount++
+	}
+	if inWord {
+		wordCount++
+	}
+
+	if err := scanner.Err(); err != nil {
+		fmt.Fprintln(os.Stderr, "Error reading from stdin:", err)
 	}
 
 	return [4]int{byteCount, lineCount, wordCount, characterCount}
