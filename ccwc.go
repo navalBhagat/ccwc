@@ -35,7 +35,9 @@ func Count(filename string) [4]int {
 
 	characterCount := 0
 	lineCount := 0
+	wordCount := 0
 	reader := bufio.NewReader(file)
+
 	for {
 		contentByte, err := reader.ReadByte()
 		if err != nil {
@@ -49,5 +51,13 @@ func Count(filename string) [4]int {
 			lineCount++
 		}
 	}
-	return [4]int{characterCount, lineCount, 0, 0}
+	file.Seek(0, 0)
+
+	scanner := bufio.NewScanner(file)
+	scanner.Split(bufio.ScanWords)
+	for scanner.Scan() {
+		wordCount++
+	}
+
+	return [4]int{characterCount, lineCount, wordCount, 0}
 }
