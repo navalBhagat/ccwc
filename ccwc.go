@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"log"
 	"os"
 )
 
@@ -24,11 +26,28 @@ func main() {
 }
 
 func Count(filename string) [4]int {
-	file, err := os.ReadFile(filename)
-	if err != nil {
-		fmt.Println("Error opening file:", err)
-	}
 
-	characterCount := len(file)
-	return [4]int{characterCount, 0, 0, 0}
+	file, err := os.Open(filename)
+	if err != nil {
+		log.Fatalf("Unable to read file: %v", err)
+	}
+	defer file.Close()
+
+	characterCount := 0
+	lineCount := 0
+	reader := bufio.NewReader(file)
+	for {
+		contentByte, err := reader.ReadByte()
+		if err != nil {
+			if err.Error() == "EOF" {
+				break
+			}
+			log.Fatalf("Error reading file: %v", err)
+		}
+		characterCount++
+		if contentByte == '\n' {
+			lineCount++
+		}
+	}
+	return [4]int{characterCount, lineCount, 0, 0}
 }
