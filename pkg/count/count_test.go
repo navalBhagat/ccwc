@@ -7,7 +7,7 @@ import (
 )
 
 func TestCountFromFile(t *testing.T) {
-	filename := "test.txt"
+	filename := "../../testdata/test.txt"
 	expected := [4]int{342190, 7145, 58164, 339292}
 
 	file, err := os.Open(filename)
@@ -26,7 +26,7 @@ func TestCountFromStdIn(t *testing.T) {
 	expected := [4]int{342190, 7145, 58164, 339292}
 
 	// Simulate input from stdin by opening the test file and redirecting stdin
-	file, err := os.Open("test.txt")
+	file, err := os.Open("../../testdata/test.txt")
 	if err != nil {
 		t.Fatalf("Failed to open test file: %v", err)
 	}
