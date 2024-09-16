@@ -20,6 +20,10 @@ OR
 
 `cat <filename> | ./ccwc [-c|-m|-w|-l]`
 
+Test the tool using: 
+
+`make test`
+
 ## Definitions of flag(s)
 
     -c : this counts the number of bytes
